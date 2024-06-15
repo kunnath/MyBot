@@ -14,7 +14,7 @@ import warnings
 # Constants
 BOOK_DIR = './literature_data'
 #BOOK_DIR= 'https://drive.google.com/drive/u/0/search?q=type:pdf'
-HF_TOKEN = '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'
+HF_TOKEN = 'hfJSoadDDfAAqtFjnaRIBeFSZSxgLpQ3'
 HF_MODEL = "mistralai/Mistral-7B-Instruct-v0.3"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-l6-v2"
 EMBEDDINGS_CACHE = './'
