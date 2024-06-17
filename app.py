@@ -10,14 +10,17 @@ from langchain.memory import ConversationBufferMemory
 import fitz  # PyMuPDF
 import os
 import warnings
+import json
 
 # Constants
 BOOK_DIR = './literature_data'
 #BOOK_DIR= 'https://drive.google.com/drive/u/0/search?q=type:pdf'
-HF_TOKEN = 'token id of the HF'
+HF_TOKEN = 'your_hf_token'
 HF_MODEL = "mistralai/Mistral-7B-Instruct-v0.3"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-l6-v2"
 EMBEDDINGS_CACHE = './'
+INDEX_DIR = "./content/books/faiss_index"
+INDEX_META_FILE = "./content/books/index_meta.json"
 
 # Suppress future warnings from the HuggingFace Hub
 warnings.filterwarnings("ignore", category=FutureWarning, module='huggingface_hub.file_download')
@@ -54,22 +57,38 @@ def load_pdf_files(directory):
     return documents
 
 # Streamlit app
-st.title("PDF Document Loader and Splitter")
+st.title("Intralogistics research engine V1.0")
+
 
 # Load the documents
 documents = load_pdf_files(BOOK_DIR)
 
-# Initialize and apply the text splitter
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=150)
-split_docs = text_splitter.split_documents(documents)
+# Get the list of filenames in the BOOK_DIR
+current_files = set(os.listdir(BOOK_DIR))
 
-# Perform vector embeddings
-# Uncomment the following lines to create and save a new FAISS index
-vector_db = FAISS.from_documents(split_docs, embeddings)
-vector_db.save_local("./content/books/faiss_index")
+# Check if the index meta file exists
+if os.path.exists(INDEX_META_FILE):
+    with open(INDEX_META_FILE, 'r') as f:
+        indexed_files = set(json.load(f))
+else:
+    indexed_files = set()
 
-# Load the FAISS index with allow_dangerous_deserialization set to True
-vector_db = FAISS.load_local("./content/books/faiss_index", embeddings, allow_dangerous_deserialization=True)
+# Check if the current files are already indexed
+if current_files != indexed_files:
+    # Initialize and apply the text splitter
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=150)
+    split_docs = text_splitter.split_documents(documents)
+
+    # Perform vector embeddings and create a new FAISS index
+    vector_db = FAISS.from_documents(split_docs, embeddings)
+    vector_db.save_local(INDEX_DIR)
+
+    # Save the current file names to the index meta file
+    with open(INDEX_META_FILE, 'w') as f:
+        json.dump(list(current_files), f)
+else:
+    # Load the FAISS index with allow_dangerous_deserialization set to True
+    vector_db = FAISS.load_local(INDEX_DIR, embeddings, allow_dangerous_deserialization=True)
 
 # Create the QA chain prompt template
 input_template = """Answer the question based only on the following context. Keep your answers short and succinct.
