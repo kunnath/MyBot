@@ -14,8 +14,7 @@ import json
 
 # Constants
 BOOK_DIR = './literature_data'
-#BOOK_DIR= 'https://drive.google.com/drive/u/0/search?q=type:pdf'
-HF_TOKEN = 'your_hf_token'
+HF_TOKEN = 
 HF_MODEL = "mistralai/Mistral-7B-Instruct-v0.3"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-l6-v2"
 EMBEDDINGS_CACHE = './'
@@ -58,7 +57,6 @@ def load_pdf_files(directory):
 
 # Streamlit app
 st.title("Intralogistics research engine V1.0")
-
 
 # Load the documents
 documents = load_pdf_files(BOOK_DIR)
@@ -116,14 +114,12 @@ qa_chain = RetrievalQA.from_chain_type(
 query = st.text_input("Enter your question:")
 if query:
     try:
-        # Generate context from the documents
-        retrieved_docs = vector_db.as_retriever(search_kwargs={"k": 2}).get_relevant_documents(query)
-        context = " ".join([doc.page_content for doc in retrieved_docs])
-        st.write("Context:", context)
+        # Invoke the chain with the query
+        answer = qa_chain({"question": query})
 
-        # Invoke the chain with the correct keys
-        answer = qa_chain.invoke({"question": query, "context": context})
-        st.write("Answer:", answer['output_text'])
+        # Extract the response text
+        response_text = answer['result']
+        st.write("Answer:", response_text)
 
         # Display source documents
         if 'source_documents' in answer:
